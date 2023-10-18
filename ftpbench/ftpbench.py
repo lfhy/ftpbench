@@ -400,7 +400,7 @@ def main():
                 for x in resolver.resolve(opts["host"], "A"):
                     hosts.append(x.to_text())
                 opts["host"] = ",".join(hosts)
-            except resolver.NXDOMAIN:
+            except:
                 pass
 
         opts["user"] = arguments["--user"]

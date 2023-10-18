@@ -74,7 +74,7 @@ DataMode = ""
 class Data(object):
     # Use Random Mode
     if DataMode == "random":
-        chunk = "".join(chr(i) for i in range(256))
+        chunk = "".join(chr(i) for i in range(65536))
     else:
         chunk = "x" * 65536
     # exit(0)

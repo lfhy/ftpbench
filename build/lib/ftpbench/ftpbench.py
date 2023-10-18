@@ -138,7 +138,7 @@ class FTP(object):
                 hostname=info[0]
                 port=info[1]
             else:
-                hostname=info[0]
+                hostname=self.host
                 port=21
             ftp = _FTP()
             ftp.connect(hostname, port)

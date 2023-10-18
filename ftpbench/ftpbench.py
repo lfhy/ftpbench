@@ -305,16 +305,28 @@ def run_bench_upload(opts):
             else:
                 stats.write_line(fix=False)
             gevent.sleep(1)
+    
+    def _check_random():
+        stats.request.total += 1
+        try:
+            path = os.path.join(
+                opts["workdir"], "bench_write-%s" % uuid.uuid1().hex)
+            data = DataRandom(opts["size"] * 1024 * 1024)
+            with stats.uploadtime():
+                ftp.upload(path, data)
+        except Timeout:
+            stats.request.timeout += 1
+        except (error_temp, error_perm, sock_error):
+            stats.request.rejected += 1
+        else:
+            stats.request.complete += 1
 
     def _check():
         stats.request.total += 1
         try:
             path = os.path.join(
                 opts["workdir"], "bench_write-%s" % uuid.uuid1().hex)
-            if opts["datamode"] == "random":
-                data = DataRandom(opts["size"] * 1024 * 1024)
-            else:
-                data = Data(opts["size"] * 1024 * 1024)
+            data = Data(opts["size"] * 1024 * 1024)
             with stats.uploadtime():
                 ftp.upload(path, data)
         except Timeout:
@@ -327,10 +339,16 @@ def run_bench_upload(opts):
     gr_stats = gevent.spawn(_print_stats)
     gr_pool = Pool(size=opts["concurrent"])
     try:
-        with Timeout(opts["maxrun"] * 60 or None):
-            while True:
-                gr_pool.wait_available()
-                gr_pool.spawn(_check)
+        if opts["datamode"] == "random":
+            with Timeout(opts["maxrun"] * 60 or None):
+                while True:
+                    gr_pool.wait_available()
+                    gr_pool.spawn(_check_random)
+        else:
+            with Timeout(opts["maxrun"] * 60 or None):
+                while True:
+                    gr_pool.wait_available()
+                    gr_pool.spawn(_check)
     except (KeyboardInterrupt, Timeout):
         pass
     finally:
@@ -357,14 +375,16 @@ def run_bench_download(opts):
 
     print("Preparing for testing...")
     ftp.timeout = 60
-    for _ in range(opts["countfiles"]):
-        path = os.path.join(
-            opts["workdir"], "bench_read-%s" % uuid.uuid1().hex)
-        if opts["datamode"] == "random":
+    if opts["datamode"] == "random":
+        for _ in range(opts["countfiles"]):
+            path = os.path.join(opts["workdir"], "bench_read-%s" % uuid.uuid1().hex)
             data = DataRandom(opts["size"] * 1024 * 1024)
-        else:
+            ftp.upload(path, data)
+    else:
+        for _ in range(opts["countfiles"]):
+            path = os.path.join(opts["workdir"], "bench_read-%s" % uuid.uuid1().hex)
             data = Data(opts["size"] * 1024 * 1024)
-        ftp.upload(path, data)
+            ftp.upload(path, data)
     ftp.timeout = opts["timeout"]
     filesiter = cycle(ftp.upload_files)
 

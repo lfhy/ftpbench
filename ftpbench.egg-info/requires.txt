@@ -1,0 +1,5 @@
+setuptools
+gevent
+dnspython
+Timecard
+docopt

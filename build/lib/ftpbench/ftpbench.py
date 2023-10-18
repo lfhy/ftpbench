@@ -267,8 +267,8 @@ def run_bench_upload(opts):
     )
 
     print (
-        "\n\rStart upload benchmark: concurrent={} timeout={}s size={}MB\n\r"
-        "".format(opts["concurrent"], opts["timeout"], opts["size"])
+        "\n\rStart upload benchmark: concurrent={} timeout={}s size={}MB dataMode={}\n\r"
+        "".format(opts["concurrent"], opts["timeout"], opts["size"],opts["datamode"])
     )
 
     stats.write_headers()

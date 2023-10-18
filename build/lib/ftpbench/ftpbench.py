@@ -52,7 +52,6 @@ import gevent
 from gevent import Timeout
 from gevent.pool import Pool
 
-import urllib.parse
 from contextlib import contextmanager
 from ftplib import FTP as _FTP, error_temp, error_perm
 from itertools import cycle
@@ -78,7 +77,6 @@ class Data(object):
         chunk = "".join(chr(i) for i in range(256))
     else:
         chunk = "x" * 65536
-    print(DataMode)
     # exit(0)
 
     def __init__(self, size):
@@ -135,13 +133,15 @@ class FTP(object):
     @contextmanager
     def connect(self):
         with Timeout(self.timeout):
-            # parse ipaddress with urllib, "//" needed
-            result = urllib.parse.urlsplit('//' + self.host)
-            if(result.port):
-                ftp = _FTP()
-                ftp.connect(result.hostname, result.port)
+            info = self.host.split(":")
+            if len(info)==2:
+                hostname=info[0]
+                port=info[1]
             else:
-                ftp = _FTP(result.hostname)
+                hostname=info[0]
+                port=21
+            ftp = _FTP()
+            ftp.connect(hostname, port)
             ftp.login(self.user, self.password)
 
         try:

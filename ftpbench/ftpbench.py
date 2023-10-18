@@ -57,6 +57,8 @@ from ftplib import FTP as _FTP, error_temp, error_perm
 from itertools import cycle
 import uuid
 import os
+import random
+import string
 from socket import error as sock_error
 
 try:
@@ -70,14 +72,8 @@ except ImportError:  # for standalone
     from .timecard import *
 # ------------------------------------------------------------------------------
 
-DataMode = ""
 class Data(object):
-    # Use Random Mode
-    if DataMode == "random":
-        chunk = "".join(chr(i) for i in range(65536))
-    else:
-        chunk = "x" * 65536
-    # exit(0)
+    chunk = "x" * 65536
 
     def __init__(self, size):
         self.size = size
@@ -97,6 +93,34 @@ class Data(object):
         else:
             self.read += tosend
             return self.chunk[:tosend]
+
+## Make Random String
+def generate_random_string(length):
+   return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(length))
+
+randomData = generate_random_string(65536)
+
+class DataRandom(object):
+    def __init__(self, size):
+        self.chunk = randomData
+        self.size = size
+        self.read = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        tosend = self.size - self.read
+        if tosend == 0:
+            raise StopIteration
+
+        if tosend > 65536:
+            self.read += 65536
+            return self.chunk
+        else:
+            self.read += tosend
+            return self.chunk[:tosend]
+
 
 
 class FTP(object):
@@ -249,8 +273,6 @@ def run_bench_login(opts):
 
 
 def run_bench_upload(opts):
-    global DataMode
-    DataMode = opts["datamode"] 
     stats = Timecard(opts["csvfilename"])
     stats.time = AutoDateTime(show_date=False)
     stats.request = MultiMetric("request")
@@ -289,7 +311,10 @@ def run_bench_upload(opts):
         try:
             path = os.path.join(
                 opts["workdir"], "bench_write-%s" % uuid.uuid1().hex)
-            data = Data(opts["size"] * 1024 * 1024)
+            if opts["datamode"] == "random":
+                data = DataRandom(opts["size"] * 1024 * 1024)
+            else:
+                data = Data(opts["size"] * 1024 * 1024)
             with stats.uploadtime():
                 ftp.upload(path, data)
         except Timeout:
@@ -335,7 +360,10 @@ def run_bench_download(opts):
     for _ in range(opts["countfiles"]):
         path = os.path.join(
             opts["workdir"], "bench_read-%s" % uuid.uuid1().hex)
-        data = Data(opts["size"] * 1024 * 1024)
+        if opts["datamode"] == "random":
+            data = DataRandom(opts["size"] * 1024 * 1024)
+        else:
+            data = Data(opts["size"] * 1024 * 1024)
         ftp.upload(path, data)
     ftp.timeout = opts["timeout"]
     filesiter = cycle(ftp.upload_files)

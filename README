@@ -49,6 +49,13 @@ Standalone for ubuntu::
     $ wget https://raw.githubusercontent.com/selectel/timecard/master/timecard/timecard.py
     $ python ftpbench.py --help
 
+Standalone for centos::
+
+    $ yum install python-devel gcc
+    $ git clone https://github.com/lfhy/ftpbench
+    $ cd ftpbench/
+    $ python setup.py install
+
 
 Usage
 -----

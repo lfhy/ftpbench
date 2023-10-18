@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="ftpbench",
-    version="1.0",
+    version="1.1",
     packages=["ftpbench"],
     url="http://github.com/selectel/ftpbench",
     license="MIT",
